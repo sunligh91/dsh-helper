@@ -4,17 +4,16 @@
 
 [![支持 DSH 版本：0.1.2-rc.1+](https://img.shields.io/badge/DSH-0.1.2--rc.1%2B-blue)](https://www.npmjs.com/package/@deepseek-ai/dsh) [![平台](https://img.shields.io/badge/platform-Windows-0078D6)](https://github.com/sunligh91/dsh-helper)
 
-[![任务通知](https://img.shields.io/badge/-任务通知-4dc6fe)](https://github.com/sunligh91/dsh-helper) [![自动重试](https://img.shields.io/badge/-自动重试-4dc6fe)](https://github.com/sunligh91/dsh-helper) [![设置面板](https://img.shields.io/badge/-设置面板-4dc6fe)](https://github.com/sunligh91/dsh-helper) [![零构建](https://img.shields.io/badge/-零构建-4dc6fe)](https://github.com/sunligh91/dsh-helper)
+[![任务通知](https://img.shields.io/badge/-任务通知-4dc6fe)](https://github.com/sunligh91/dsh-helper) [![设置面板](https://img.shields.io/badge/-设置面板-4dc6fe)](https://github.com/sunligh91/dsh-helper) [![零构建](https://img.shields.io/badge/-零构建-4dc6fe)](https://github.com/sunligh91/dsh-helper)
 
 🌏 [English](./README.md) · [**中文**](./README.zh.md)
 
-> 一个 [DSH](https://www.npmjs.com/package/@deepseek-ai/dsh) 插件：当 agent 会话**完成**、**异常**或**需要你确认**时弹出 Windows 原生通知；并对瞬时请求失败自动重试，避免长任务跑到一半就断掉。
+> 一个 [DSH](https://www.npmjs.com/package/@deepseek-ai/dsh) 插件：当 agent 会话**完成**、**异常**或**需要你确认**时弹出 Windows 原生通知——长任务可以放手不管，出事的瞬间你会知道。
 
 ## ✨ 功能一览
 
 - **🔔 任务通知** — agent 进入空闲（任务完成）、出错、或即将向你提问时，弹出 Windows 原生 Toast。
-- **🔄 自动重试** — 瞬时故障（超时、连接重置、DNS 失败、限流、5xx）按设置次数自动重试，采用指数退避。
-- **⚙️ 设置面板** — DSH 设置页新增「任务通知 (dsh-helper)」分区：重试次数、基础退避、三个通知开关。
+- **⚙️ 设置面板** — DSH 设置页新增「任务通知 (dsh-helper)」分区，三个通知开关独立控制。
 - **🧪 测试按钮** — 一键发送测试通知，验证本机通知链路是否正常。
 - **🪶 零原生依赖** — 通知走 PowerShell WinRT Toast，无需编译任何二进制。
 - **🔁 热重载** — 配置写回 profile 的 `cordis.patch.yml`，由 DSH 的 patch watcher 自动生效，无需重启。
@@ -66,8 +65,6 @@ pnpm add file:/绝对路径/dsh-helper
 
 | 配置项 | 默认值 | 说明 |
 | --- | --- | --- |
-| `retryMax` | `3` | 每个会话在 60 秒滚动窗口内的最大自动重试次数，`0` 表示关闭重试。 |
-| `retryBaseMs` | `1000` | 退避基数（毫秒）。每次重试翻倍（`base × 2^(n-1)`），上限 30 秒。 |
 | `notifyOnComplete` | `true` | 会话完成时通知（同一会话 60 秒内去重）。 |
 | `notifyOnError` | `true` | 会话出错时通知。 |
 | `notifyOnConfirm` | `true` | agent 即将提问时通知。 |
@@ -79,10 +76,12 @@ pnpm add file:/绝对路径/dsh-helper
 | DSH 事件 | 行为 |
 | --- | --- |
 | `agent/status`（`idle`） | 弹出「任务完成」通知 |
-| `agent/request-error` | 弹出「任务异常」通知，并返回 `{ kind: 'retry' }` 触发 DSH **原生**重试 |
+| `agent/request-error` | 弹出「任务异常」通知（纯放行，不做任何拦截或重试） |
 | `tools/pre-execute`（`ask_user_question`） | 弹出「需要确认」通知 |
 
 设置路由（`/_dsh/dsh-helper/settings`）仅监听本机，非 `127.0.0.1` / `::1` 的请求一律返回 `403`。
+
+> 🔄 **还需要自动重试？** 本插件只做通知，这是有意为之。可搭配专门的重试插件，例如 [`dsh-task-reliability`](https://www.npmjs.com/package/dsh-task-reliability)（它在同一事件上返回 `{ kind: 'retry' }` 触发 DSH 原生重试）。
 
 ## 🛠️ 开发与构建
 
@@ -101,8 +100,7 @@ cd dsh-helper
 
 ## ⚠️ 已知限制
 
-- 通知面向 Windows（PowerShell WinRT Toast）。在 macOS/Linux 上插件仍会加载、自动重试也照常工作，但通知是静默空操作。
-- 重试预算按会话在 60 秒滚动窗口内计算；用尽后失败会原样交还给 DSH。
+- 通知面向 Windows（PowerShell WinRT Toast）。在 macOS/Linux 上插件仍会加载，但通知是静默空操作。
 - 若 Windows「专注助手」开启，通知可能被拦截——请为 `dsh-helper` 这个应用 id 放行通知。
 
 ## 📄 许可证

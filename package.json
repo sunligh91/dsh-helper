@@ -1,7 +1,7 @@
 {
   "name": "dsh-helper",
-  "version": "0.1.0",
-  "description": "DSH task notifier & auto-retry plugin: pops Windows notifications when an agent session finishes, errors, or needs confirmation, and auto-retries transient request failures by a configured count.",
+  "version": "0.2.0",
+  "description": "DSH task notifier plugin: pops Windows notifications when an agent session finishes, errors, or needs confirmation.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -31,9 +31,7 @@
     "notifier",
     "notification",
     "windows",
-    "toast",
-    "retry",
-    "auto-retry"
+    "toast"
   ],
   "repository": {
     "type": "git",

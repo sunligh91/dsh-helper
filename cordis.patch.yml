@@ -1,12 +1,10 @@
-# dsh-helper：任务通知 + 自动重试。
+# dsh-helper：任务通知。
 # 配置推荐走 Web 设置页：设置 → 任务通知 (dsh-helper)。
 # 下面的 YAML 仅提供默认值；改名/移动包后由 dsh 自动重建该 row。
 - insert:
     - id: dsh-helper
       name: dsh-helper
       config:
-        retryMax: 3
-        retryBaseMs: 1000
         notifyOnComplete: true
         notifyOnError: true
         notifyOnConfirm: true
