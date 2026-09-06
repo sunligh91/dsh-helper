@@ -1,0 +1,110 @@
+# dsh-helper
+
+[![npm version](https://img.shields.io/npm/v/dsh-helper)](https://www.npmjs.com/package/dsh-helper) [![npm downloads](https://img.shields.io/npm/dm/dsh-helper)](https://www.npmjs.com/package/dsh-helper) [![GitHub stars](https://img.shields.io/github/stars/sunligh91/dsh-helper)](https://github.com/sunligh91/dsh-helper/stargazers) [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+[![支持 DSH 版本：0.1.2-rc.1+](https://img.shields.io/badge/DSH-0.1.2--rc.1%2B-blue)](https://www.npmjs.com/package/@deepseek-ai/dsh) [![平台](https://img.shields.io/badge/platform-Windows-0078D6)](https://github.com/sunligh91/dsh-helper)
+
+[![任务通知](https://img.shields.io/badge/-任务通知-4dc6fe)](https://github.com/sunligh91/dsh-helper) [![自动重试](https://img.shields.io/badge/-自动重试-4dc6fe)](https://github.com/sunligh91/dsh-helper) [![设置面板](https://img.shields.io/badge/-设置面板-4dc6fe)](https://github.com/sunligh91/dsh-helper) [![零构建](https://img.shields.io/badge/-零构建-4dc6fe)](https://github.com/sunligh91/dsh-helper)
+
+🌏 [English](./README.md) · [**中文**](./README.zh.md)
+
+> 一个 [DSH](https://www.npmjs.com/package/@deepseek-ai/dsh) 插件：当 agent 会话**完成**、**异常**或**需要你确认**时弹出 Windows 原生通知；并对瞬时请求失败自动重试，避免长任务跑到一半就断掉。
+
+## ✨ 功能一览
+
+- **🔔 任务通知** — agent 进入空闲（任务完成）、出错、或即将向你提问时，弹出 Windows 原生 Toast。
+- **🔄 自动重试** — 瞬时故障（超时、连接重置、DNS 失败、限流、5xx）按设置次数自动重试，采用指数退避。
+- **⚙️ 设置面板** — DSH 设置页新增「任务通知 (dsh-helper)」分区：重试次数、基础退避、三个通知开关。
+- **🧪 测试按钮** — 一键发送测试通知，验证本机通知链路是否正常。
+- **🪶 零原生依赖** — 通知走 PowerShell WinRT Toast，无需编译任何二进制。
+- **🔁 热重载** — 配置写回 profile 的 `cordis.patch.yml`，由 DSH 的 patch watcher 自动生效，无需重启。
+
+## 🚀 安装
+
+**前置条件**：DSH `0.1.2-rc.1+`，且 `web` profile 已初始化（至少跑过一次 `dsh web`），Node.js ≥ 20、pnpm ≥ 10。
+
+### 方式一 — npm
+
+```bash
+# 从 git 仓库安装（当前可用）
+npm install github:sunligh91/dsh-helper
+
+# 或从 npm registry 安装
+npm install dsh-helper
+```
+
+然后注册到 web profile：
+
+```bash
+dsh plugin --profile web add dsh-helper@latest
+```
+
+### 方式二 — DSH 一行命令
+
+```bash
+dsh plugin --profile web add dsh-helper@latest
+```
+
+> 若 pnpm 11 拦截了构建脚本，先在 `~/.dsh/profiles/web` 下执行 `pnpm approve-builds --all`，再重跑上面的命令。
+
+### 方式三 — 从源码安装
+
+```bash
+git clone https://github.com/sunligh91/dsh-helper.git
+cd dsh-helper
+
+# 链接到你的 web profile
+cd ~/.dsh/profiles/web
+pnpm add file:/绝对路径/dsh-helper
+```
+
+然后把 `"dsh-helper"` 加进 `~/.dsh/profiles/web/package.json` 的 `dsh.profile.bundles` 数组，并**硬刷新**浏览器（Ctrl/Cmd + Shift + R）。
+
+## ⚙️ 配置
+
+进入 **设置 → 任务通知 (dsh-helper)**。
+
+| 配置项 | 默认值 | 说明 |
+| --- | --- | --- |
+| `retryMax` | `3` | 每个会话在 60 秒滚动窗口内的最大自动重试次数，`0` 表示关闭重试。 |
+| `retryBaseMs` | `1000` | 退避基数（毫秒）。每次重试翻倍（`base × 2^(n-1)`），上限 30 秒。 |
+| `notifyOnComplete` | `true` | 会话完成时通知（同一会话 60 秒内去重）。 |
+| `notifyOnError` | `true` | 会话出错时通知。 |
+| `notifyOnConfirm` | `true` | agent 即将提问时通知。 |
+
+默认值随包附在 `cordis.patch.yml`；你的改动会写入 `~/.dsh/profiles/web/cordis.patch.yml`。
+
+## 🔌 工作原理
+
+| DSH 事件 | 行为 |
+| --- | --- |
+| `agent/status`（`idle`） | 弹出「任务完成」通知 |
+| `agent/request-error` | 弹出「任务异常」通知，并返回 `{ kind: 'retry' }` 触发 DSH **原生**重试 |
+| `tools/pre-execute`（`ask_user_question`） | 弹出「需要确认」通知 |
+
+设置路由（`/_dsh/dsh-helper/settings`）仅监听本机，非 `127.0.0.1` / `::1` 的请求一律返回 `403`。
+
+## 🛠️ 开发与构建
+
+```bash
+git clone https://github.com/sunligh91/dsh-helper.git
+cd dsh-helper
+```
+
+| 文件 | 作用 |
+| --- | --- |
+| `lib/index.js` | 宿主侧 — cordis 插件：事件钩子 + 设置路由 |
+| `lib/client.js` | 客户端侧 — 通过 `window.__ModuleLoader__` 注册，无需构建 |
+| `cordis.patch.yml` | 注入 profile 的默认配置 |
+
+两侧都是原生 ES module / UMD，没有打包器，改完刷新即可。
+
+## ⚠️ 已知限制
+
+- 通知面向 Windows（PowerShell WinRT Toast）。在 macOS/Linux 上插件仍会加载、自动重试也照常工作，但通知是静默空操作。
+- 重试预算按会话在 60 秒滚动窗口内计算；用尽后失败会原样交还给 DSH。
+- 若 Windows「专注助手」开启，通知可能被拦截——请为 `dsh-helper` 这个应用 id 放行通知。
+
+## 📄 许可证
+
+[MIT](./LICENSE) © sunligh91
