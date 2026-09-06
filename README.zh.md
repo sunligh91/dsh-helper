@@ -8,13 +8,14 @@
 
 🌏 [English](./README.md) · [**中文**](./README.zh.md)
 
-> 一个 [DSH](https://www.npmjs.com/package/@deepseek-ai/dsh) 插件：当 agent 会话**完成**、**异常**或**需要你确认**时弹出 Windows 原生通知——长任务可以放手不管，出事的瞬间你会知道。
+> 一个 [DSH](https://www.npmjs.com/package/@deepseek-ai/dsh) 插件：当 agent 会话**完成**、**异常**或**需要你确认**时弹出 Windows 原生通知，完成时还可附带提示音——长任务可以放手不管，出事的瞬间你会知道。
 
 ## ✨ 功能一览
 
 - **🔔 任务通知** — agent 进入空闲（任务完成）、出错、或即将向你提问时，弹出 Windows 原生 Toast。
-- **⚙️ 设置面板** — DSH 设置页新增「任务通知 (dsh-helper)」分区，三个通知开关独立控制。
-- **🧪 测试按钮** — 一键发送测试通知，验证本机通知链路是否正常。
+- **🔊 完成音效** — 会话完成时播放提示音。随包内置一段合成的双音提示音；音量可调（0–100），也可指定任意本地音频文件（wav / mp3 / wma）。
+- **⚙️ 设置面板** — DSH 设置页新增「任务通知 (dsh-helper)」分区：三个通知开关 + 音效控制。
+- **🧪 测试按钮** — 一键发送测试通知并按当前设置试听音效，验证本机链路是否正常。
 - **🪶 零原生依赖** — 通知走 PowerShell WinRT Toast，无需编译任何二进制。
 - **🔁 热重载** — 配置写回 profile 的 `cordis.patch.yml`，由 DSH 的 patch watcher 自动生效，无需重启。
 
@@ -68,6 +69,9 @@ pnpm add file:/绝对路径/dsh-helper
 | `notifyOnComplete` | `true` | 会话完成时通知（同一会话 60 秒内去重）。 |
 | `notifyOnError` | `true` | 会话出错时通知。 |
 | `notifyOnConfirm` | `true` | agent 即将提问时通知。 |
+| `soundOnComplete` | `true` | 完成通知后播放提示音。 |
+| `soundVolume` | `70` | 提示音音量，`0`–`100`。 |
+| `soundFile` | `""` | 本地音频文件路径（wav / mp3 / wma）。留空用内置提示音；自定义文件不存在时回退到内置提示音，再回退到 Windows 系统自带提示音。 |
 
 默认值随包附在 `cordis.patch.yml`；你的改动会写入 `~/.dsh/profiles/web/cordis.patch.yml`。
 
@@ -75,7 +79,7 @@ pnpm add file:/绝对路径/dsh-helper
 
 | DSH 事件 | 行为 |
 | --- | --- |
-| `agent/status`（`idle`） | 弹出「任务完成」通知 |
+| `agent/status`（`idle`） | 弹出「任务完成」通知 + 播放提示音 |
 | `agent/request-error` | 弹出「任务异常」通知（纯放行，不做任何拦截或重试） |
 | `tools/pre-execute`（`ask_user_question`） | 弹出「需要确认」通知 |
 
@@ -100,7 +104,8 @@ cd dsh-helper
 
 ## ⚠️ 已知限制
 
-- 通知面向 Windows（PowerShell WinRT Toast）。在 macOS/Linux 上插件仍会加载，但通知是静默空操作。
+- 通知面向 Windows（PowerShell WinRT Toast）。在 macOS/Linux 上插件仍会加载，但通知和音效都是静默空操作。
+- 音效走 PowerShell + WPF MediaPlayer；不可用时退回 `System.Media.SoundPlayer`（仅支持 wav，且音量设置不生效）。
 - 若 Windows「专注助手」开启，通知可能被拦截——请为 `dsh-helper` 这个应用 id 放行通知。
 
 ## 📄 许可证

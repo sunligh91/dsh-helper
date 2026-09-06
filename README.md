@@ -8,13 +8,14 @@
 
 🌏 [**English**](./README.md) · [中文](./README.zh.md)
 
-> A [DSH](https://www.npmjs.com/package/@deepseek-ai/dsh) plugin that pops native Windows notifications when an agent session **finishes**, **fails**, or **needs your confirmation** — so you can walk away from long runs and still know the moment something needs you.
+> A [DSH](https://www.npmjs.com/package/@deepseek-ai/dsh) plugin that pops native Windows notifications when an agent session **finishes**, **fails**, or **needs your confirmation** — with an optional completion chime — so you can walk away from long runs and still know the moment something needs you.
 
 ## ✨ Features
 
 - **🔔 Task notifications** — a native Windows toast when the agent goes idle (task complete), hits an error, or is about to ask you a question.
-- **⚙️ Settings panel** — a **Task Notifications (dsh-helper)** section in DSH Settings with three independent toggles.
-- **🧪 Test button** — fire a test toast to verify the notification pipeline works on your machine.
+- **🔊 Completion chime** — plays a sound when a session finishes. Ships with a built-in synthesized two-note chime; volume is adjustable (0–100) and you can point it at any local audio file (wav / mp3 / wma).
+- **⚙️ Settings panel** — a **Task Notifications (dsh-helper)** section in DSH Settings with three notification toggles plus the sound controls.
+- **🧪 Test button** — fire a test toast and play the current sound to verify the pipeline on your machine.
 - **🪶 Zero native dependencies** — notifications go through PowerShell WinRT Toast, so there is nothing to compile.
 - **🔁 Hot reload** — configuration is written back to the profile's `cordis.patch.yml` and picked up by DSH's patch watcher, no restart needed.
 
@@ -68,6 +69,9 @@ Go to **Settings → Task Notifications (dsh-helper)**.
 | `notifyOnComplete` | `true` | Notify when a session finishes (deduped to once per 60 s per session). |
 | `notifyOnError` | `true` | Notify when a session hits an error. |
 | `notifyOnConfirm` | `true` | Notify when the agent is about to ask you a question. |
+| `soundOnComplete` | `true` | Play the completion chime after the completion toast. |
+| `soundVolume` | `70` | Chime volume, `0`–`100`. |
+| `soundFile` | `""` | Path to a local audio file (wav / mp3 / wma). Empty = the bundled chime; if the custom file is missing it falls back to the bundled chime, then to Windows built-in notify sounds. |
 
 Defaults ship in `cordis.patch.yml`; your overrides are written to `~/.dsh/profiles/web/cordis.patch.yml`.
 
@@ -75,7 +79,7 @@ Defaults ship in `cordis.patch.yml`; your overrides are written to `~/.dsh/profi
 
 | DSH event | Behaviour |
 | --- | --- |
-| `agent/status` (`idle`) | Completion toast |
+| `agent/status` (`idle`) | Completion toast + chime |
 | `agent/request-error` | Error toast (passthrough — this plugin never blocks or retries) |
 | `tools/pre-execute` (`ask_user_question`) | Confirmation toast |
 
@@ -100,7 +104,8 @@ Both halves are plain ES modules / UMD — there is no bundler, so edit and relo
 
 ## ⚠️ Known limitations
 
-- Notifications target Windows (PowerShell WinRT Toast). On macOS/Linux the plugin still loads, but toasts are silent no-ops.
+- Notifications target Windows (PowerShell WinRT Toast). On macOS/Linux the plugin still loads, but toasts and sounds are silent no-ops.
+- Sound playback uses WPF MediaPlayer via PowerShell. If that's unavailable it falls back to `System.Media.SoundPlayer`, which only plays wav and ignores the volume setting.
 - If Windows Focus Assist is on, toasts may be suppressed — allow notifications for the `dsh-helper` app id.
 
 ## 📄 License
