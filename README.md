@@ -12,10 +12,10 @@
 
 ## ✨ Features
 
-- **🔔 Task notifications** — a native Windows toast when the agent goes idle (task complete), hits an error, or is about to ask you a question.
+- **🔔 Task notifications** — a native Windows toast when the agent goes idle (task complete), hits an error, is about to ask you a question, or a tool needs permission approval.
 - **🔊 Completion chime** — plays a sound when a session finishes. Ships with a built-in synthesized two-note chime; volume is adjustable (0–100) and you can point it at any local audio file (wav / mp3 / wma).
-- **⚙️ Settings panel** — a **Task Notifications (dsh-helper)** section in DSH Settings with three notification toggles plus the sound controls.
-- **🧪 Test button** — fire a test toast and play the current sound to verify the pipeline on your machine.
+- **⚙️ Settings panel** — a **Task Notifications (dsh-helper)** section in DSH Settings with four notification toggles plus the sound controls.
+- **🧪 Three test buttons** — preview each real notification type (complete / multi-choice confirm / permission approval) with one click.
 - **🪶 Zero native dependencies** — notifications go through PowerShell WinRT Toast, so there is nothing to compile.
 - **🔁 Hot reload** — configuration is written back to the profile's `cordis.patch.yml` and picked up by DSH's patch watcher, no restart needed.
 
@@ -68,7 +68,8 @@ Go to **Settings → Task Notifications (dsh-helper)**.
 | --- | --- | --- |
 | `notifyOnComplete` | `true` | Notify when a session finishes (deduped to once per 60 s per session). |
 | `notifyOnError` | `true` | Notify when a session hits an error. |
-| `notifyOnConfirm` | `true` | Notify when the agent is about to ask you a question. |
+| `notifyOnConfirm` | `true` | Notify when the agent is about to ask you a question (multi-choice). |
+| `notifyOnPermission` | `true` | Notify when a tool triggers a permission approval dialog. |
 | `soundOnComplete` | `true` | Play the completion chime after the completion toast. |
 | `soundVolume` | `70` | Chime volume, `0`–`100`. |
 | `soundFile` | `""` | Path to a local audio file (wav / mp3 / wma). Empty = the bundled chime; if the custom file is missing it falls back to the bundled chime, then to Windows built-in notify sounds. |
@@ -81,7 +82,8 @@ Defaults ship in `cordis.patch.yml`; your overrides are written to `~/.dsh/profi
 | --- | --- |
 | `agent/status` (`idle`) | Completion toast + chime |
 | `agent/request-error` | Error toast (passthrough — this plugin never blocks or retries) |
-| `tools/pre-execute` (`ask_user_question`) | Confirmation toast |
+| `tools/pre-execute` (`ask_user_question`) | Confirmation toast (multi-choice question) |
+| `approval/request` | Permission toast (tool approval; observe-and-forward only, never blocks) |
 
 The settings HTTP route (`/_dsh/dsh-helper/settings`) is bound to localhost only — anything other than `127.0.0.1` / `::1` gets a `403`.
 
@@ -115,6 +117,7 @@ Both halves are plain ES modules / UMD — there is no bundler, so edit and relo
 
 ## 📝 Changelog
 
+- **0.4.0** — Added a "needs permission" notification (hooks the `approval/request` event for tool approval dialogs); the settings panel now has three test buttons: complete / multi-choice confirm / permission.
 - **0.3.2** — Fixed confirmation toasts not appearing. Windows silently drops WinRT toasts sent under an unregistered custom app id, so notifications are now sent under File Explorer's always-registered AUMID. Added a `WScript.Shell` popup fallback for environments where WinRT is unavailable.
 - **0.3.1** — Added temporary diagnostic logging (to be removed once the confirm-notification issue is verified resolved).
 - **0.3.0** — Added an optional completion chime (built-in synthesized two-note sound, adjustable volume, custom local file).

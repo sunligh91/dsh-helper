@@ -8,6 +8,7 @@
         notifyOnComplete: true
         notifyOnError: true
         notifyOnConfirm: true
+        notifyOnPermission: true
         soundOnComplete: true
         soundVolume: 70
         soundFile: ''
