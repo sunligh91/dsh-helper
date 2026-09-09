@@ -1,6 +1,6 @@
 {
   "name": "dsh-helper",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "DSH task notifier plugin: pops Windows notifications when an agent session finishes, errors, or needs confirmation.",
   "type": "module",
   "main": "lib/index.js",

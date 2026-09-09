@@ -106,8 +106,17 @@ Both halves are plain ES modules / UMD — there is no bundler, so edit and relo
 
 - Notifications target Windows (PowerShell WinRT Toast). On macOS/Linux the plugin still loads, but toasts and sounds are silent no-ops.
 - Sound playback uses WPF MediaPlayer via PowerShell. If that's unavailable it falls back to `System.Media.SoundPlayer`, which only plays wav and ignores the volume setting.
-- If Windows Focus Assist is on, toasts may be suppressed — allow notifications for the `dsh-helper` app id.
+- If Windows Focus Assist / Do Not Disturb is on, toasts may be suppressed.
+- Toasts are sent under Windows' built-in File Explorer app id (a registered AUMID), so no Start-Menu shortcut is required and notifications are never silently dropped for an unregistered custom id. They'll appear in Action Center grouped under "File Explorer".
 
 ## 📄 License
 
 [MIT](./LICENSE) © sunligh91
+
+## 📝 Changelog
+
+- **0.3.2** — Fixed confirmation toasts not appearing. Windows silently drops WinRT toasts sent under an unregistered custom app id, so notifications are now sent under File Explorer's always-registered AUMID. Added a `WScript.Shell` popup fallback for environments where WinRT is unavailable.
+- **0.3.1** — Added temporary diagnostic logging (to be removed once the confirm-notification issue is verified resolved).
+- **0.3.0** — Added an optional completion chime (built-in synthesized two-note sound, adjustable volume, custom local file).
+- **0.2.0** — Removed auto-retry; notifications only.
+- **0.1.0** — Initial release: completion / error / confirm notifications.
