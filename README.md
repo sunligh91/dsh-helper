@@ -117,6 +117,7 @@ Both halves are plain ES modules / UMD — there is no bundler, so edit and relo
 
 ## 📝 Changelog
 
+- **0.4.1** — Fixed notifications falling back to a popup dialog: `GetTemplateContent` was mistakenly called on the `ToastNotifier` instance (the method belongs to the static `ToastNotificationManager` class), so the WinRT toast never actually succeeded and every notification took the WScript dialog fallback. Now calls the correct target — real toasts verified.
 - **0.4.0** — Added a "needs permission" notification (hooks the `approval/request` event for tool approval dialogs); the settings panel now has three test buttons: complete / multi-choice confirm / permission.
 - **0.3.2** — Fixed confirmation toasts not appearing. Windows silently drops WinRT toasts sent under an unregistered custom app id, so notifications are now sent under File Explorer's always-registered AUMID. Added a `WScript.Shell` popup fallback for environments where WinRT is unavailable.
 - **0.3.1** — Added temporary diagnostic logging (to be removed once the confirm-notification issue is verified resolved).

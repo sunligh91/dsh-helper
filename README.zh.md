@@ -115,6 +115,7 @@ cd dsh-helper
 
 ## 📝 更新日志
 
+- **0.4.1** — 修复通知回退成弹窗的根因：`GetTemplateContent` 被误调在 `ToastNotifier` 实例上（该方法属于 `ToastNotificationManager` 静态类），WinRT toast 从未真正成功过，一直走 WScript 弹窗兜底。现改回正确调用并实测弹出真通知。
 - **0.4.0** — 新增「需要授权」通知（钩 `approval/request` 事件，工具权限审批时提醒）；设置面板拆分为三个测试按钮：完成 / 多选一确认 / 权限审批。
 - **0.3.2** — 修复确认通知不显示：Windows 会静默丢弃未注册自定义应用 id 的 Toast，现改用文件资源管理器的注册 AUMID 发送；新增 WScript.Shell 弹窗兜底。
 - **0.3.1** — 加入临时诊断日志（确认问题解决后移除）。
