@@ -117,6 +117,7 @@ Both halves are plain ES modules / UMD — there is no bundler, so edit and relo
 
 ## 📝 Changelog
 
+- **0.4.3** — Fixed notification flooding: completion notifications no longer fire for **sub-agents** (dsh runs several sub-agents in parallel and each one finishing posted a "task complete" toast, flooding the notification center — main session ids carry a `session-` prefix while sub-agent ids are bare UUIDs, used for filtering); added a global 60s throttle so multiple main sessions finishing together still post at most one toast.
 - **0.4.2** — The toast header now shows a real app name: the AUMID switched from the borrowed File Explorer GUID to `dsh-helper`, with its `DisplayName` idempotently written to `HKCU\Software\Classes\AppUserModelId\dsh-helper` before every send — the header changes from a hex GUID to **dsh-helper**.
 - **0.4.1** — Fixed notifications falling back to a popup dialog: `GetTemplateContent` was mistakenly called on the `ToastNotifier` instance (the method belongs to the static `ToastNotificationManager` class), so the WinRT toast never actually succeeded and every notification took the WScript dialog fallback. Now calls the correct target — real toasts verified.
 - **0.4.0** — Added a "needs permission" notification (hooks the `approval/request` event for tool approval dialogs); the settings panel now has three test buttons: complete / multi-choice confirm / permission.
