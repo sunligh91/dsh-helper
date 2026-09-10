@@ -115,6 +115,7 @@ cd dsh-helper
 
 ## 📝 更新日志
 
+- **0.4.2** — 通知顶部改用自有应用标识：AUMID 从借用的 File Explorer GUID 换成 `dsh-helper`，并在每次发送前幂等写入 `HKCU\Software\Classes\AppUserModelId\dsh-helper` 的 `DisplayName`，通知顶部由一串十六进制 GUID 变为 **dsh-helper**。
 - **0.4.1** — 修复通知回退成弹窗的根因：`GetTemplateContent` 被误调在 `ToastNotifier` 实例上（该方法属于 `ToastNotificationManager` 静态类），WinRT toast 从未真正成功过，一直走 WScript 弹窗兜底。现改回正确调用并实测弹出真通知。
 - **0.4.0** — 新增「需要授权」通知（钩 `approval/request` 事件，工具权限审批时提醒）；设置面板拆分为三个测试按钮：完成 / 多选一确认 / 权限审批。
 - **0.3.2** — 修复确认通知不显示：Windows 会静默丢弃未注册自定义应用 id 的 Toast，现改用文件资源管理器的注册 AUMID 发送；新增 WScript.Shell 弹窗兜底。
