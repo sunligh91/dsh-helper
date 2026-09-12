@@ -1,7 +1,7 @@
 {
   "name": "dsh-helper",
-  "version": "0.4.4",
-  "description": "DSH task notifier plugin: pops Windows notifications when an agent session finishes, errors, or needs confirmation.",
+  "version": "0.5.0",
+  "description": "DSH task notifier plugin: pops Windows toast notifications when an agent session finishes, errors, needs confirmation, or asks for approval. Self-registers the required AppUserModelID shortcut so notifications are delivered even when the app is not focused.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -28,10 +28,13 @@
   "keywords": [
     "dsh",
     "deepseek",
+    "deepseek-harness",
+    "dsh-plugin",
     "notifier",
     "notification",
     "windows",
-    "toast"
+    "toast",
+    "appusermodelid"
   ],
   "repository": {
     "type": "git",

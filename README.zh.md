@@ -23,29 +23,26 @@
 
 **前置条件**：DSH `0.1.2-rc.1+`，且 `web` profile 已初始化（至少跑过一次 `dsh web`），Node.js ≥ 20、pnpm ≥ 10。
 
-### 方式一 — npm
-
-```bash
-# 从 git 仓库安装（当前可用）
-npm install github:sunligh91/dsh-helper
-
-# 或从 npm registry 安装
-npm install dsh-helper
-```
-
-然后注册到 web profile：
+### 方式一 — npm registry（推荐）
 
 ```bash
 dsh plugin --profile web add dsh-helper@latest
 ```
 
-### 方式二 — DSH 一行命令
+包内是**预构建产物**（`lib/` 已随包发布），**不含任何安装脚本**，因此 pnpm 不会要求你授权构建，装完即用。
+
+### 方式二 — 从 git 仓库安装
 
 ```bash
-dsh plugin --profile web add dsh-helper@latest
+dsh plugin --profile web add github:sunligh91/dsh-helper
 ```
 
-> 若 pnpm 11 拦截了构建脚本，先在 `~/.dsh/profiles/web` 下执行 `pnpm approve-builds --all`，再重跑上面的命令。
+> git 源安装会拉源码并由 pnpm 运行 `prepare`；pnpm ≥10 在得到显式允许前会拒绝执行，需要把 pnpm 打印的包键写进该 profile 的 `pnpm-workspace.yaml`：
+> ```yaml
+> allowBuilds:
+>   dsh-helper: true
+> ```
+> 该授权等于「允许此包的代码在安装时于本机执行」。若只想装预构建代码，请用**方式一**。
 
 ### 方式三 — 从源码安装
 
@@ -82,6 +79,9 @@ pnpm add file:/绝对路径/dsh-helper
 | `agent/status`（`idle`） | 弹出「任务完成」通知 + 播放提示音 |
 | `agent/request-error` | 弹出「任务异常」通知（纯放行，不做任何拦截或重试） |
 | `tools/pre-execute`（`ask_user_question`） | 弹出「需要确认」通知 |
+| `session/event` → `approval/asked` | 弹出「需要授权」通知 |
+
+> 审批通知监听的是会话审计事件 `approval/asked`，而不是瀑布事件 `approval/request`。原因是 cordis 的 waterfall 语义为「不调用 `next()` 即否决整条链」，任何排在前面并直接返回结果的监听器（例如自动审批门控）都会让后面的监听器永远收不到事件。`approval/asked` 是决策前写入日志的纯审计事件，不受此影响。
 
 设置路由（`/_dsh/dsh-helper/settings`）仅监听本机，非 `127.0.0.1` / `::1` 的请求一律返回 `403`。
 
@@ -107,7 +107,8 @@ cd dsh-helper
 - 通知面向 Windows（PowerShell WinRT Toast）。在 macOS/Linux 上插件仍会加载，但通知和音效都是静默空操作。
 - 音效走 PowerShell + WPF MediaPlayer；不可用时退回 `System.Media.SoundPlayer`（仅支持 wav，且音量设置不生效）。
 - 若 Windows「专注助手 / 勿扰」开启，通知可能被拦截。
-- 通知以 Windows 内置的「文件资源管理器」应用 id（已注册 AUMID）发送，无需开始菜单快捷方式、不会被静默丢弃；在通知中心里会归到「文件资源管理器」名下。
+- **投递身份（0.5.0 起自动处理）**：Windows 要求桌面程序在开始菜单有一条携带 `System.AppUserModel.ID` 的快捷方式，否则 toast 会被**间歇性静默丢弃**（尤其当有前台窗口时），表现为「焦点不在本应用就收不到通知」。插件启动时会自动幂等补齐这条快捷方式（`%APPDATA%\Microsoft\Windows\Start Menu\Programs\dsh-helper.lnk`），无需手动操作、也无需管理员权限。
+- 快捷方式若被清理软件删除，下次启动 DSH 会自动重建。
 
 ## 📄 许可证
 
@@ -115,6 +116,7 @@ cd dsh-helper
 
 ## 📝 更新日志
 
+- **0.5.0** — 修复「焦点不在 DSH 就收不到通知」：Windows 要求桌面程序的开始菜单快捷方式携带 `System.AppUserModel.ID`，否则 toast 会被间歇性静默丢弃。插件启动时自动幂等补齐该快捷方式（运行时自建，包内不含任何安装脚本，npm 安装无需授权）。另：审批通知改挂 `session/event` → `approval/asked`，不再被自动审批门控的瀑布抢答吞掉。
 - **0.4.4** — 移除 0.4.3 引入的全局节流（会吞掉并发主会话的完成通知），只保留**子 agent 不通知**这一条过滤规则。
 - **0.4.3** — 修复通知轰炸：任务完成通知不再对**子 agent** 触发（dsh 并行跑多个子 agent，每个收尾都发一条，通知中心被刷爆——主会话 id 带 `session-` 前缀，子 agent 是裸 UUID，据此过滤）；另加全局节流，60 秒内最多一条完成通知。
 - **0.4.2** — 通知顶部改用自有应用标识：AUMID 从借用的 File Explorer GUID 换成 `dsh-helper`，并在每次发送前幂等写入 `HKCU\Software\Classes\AppUserModelId\dsh-helper` 的 `DisplayName`，通知顶部由一串十六进制 GUID 变为 **dsh-helper**。

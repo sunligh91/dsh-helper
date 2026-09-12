@@ -3,3 +3,7 @@ node_modules/
 .DS_Store
 Thumbs.db
 *.log
+
+# Local-only release helper (never commit credentials or machine-specific paths).
+# Keep any GitHub token in the GITHUB_TOKEN environment variable instead.
+push_api.py

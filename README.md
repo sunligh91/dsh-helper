@@ -23,29 +23,26 @@
 
 **Prerequisites**: DSH `0.1.2-rc.1+` with the `web` profile already initialized (run `dsh web` at least once), Node.js ≥ 20, pnpm ≥ 10.
 
-### Option 1 — npm
-
-```bash
-# from the git repo (works today)
-npm install github:sunligh91/dsh-helper
-
-# or from the npm registry
-npm install dsh-helper
-```
-
-Then register it with your web profile:
+### Option 1 — npm registry (recommended)
 
 ```bash
 dsh plugin --profile web add dsh-helper@latest
 ```
 
-### Option 2 — one-liner through DSH
+The package ships **prebuilt artifacts** (`lib/` is published) and contains **no install scripts**, so pnpm never asks you to authorize a build.
+
+### Option 2 — from the git repo
 
 ```bash
-dsh plugin --profile web add dsh-helper@latest
+dsh plugin --profile web add github:sunligh91/dsh-helper
 ```
 
-> If pnpm 11 blocks build scripts, run `pnpm approve-builds --all` inside `~/.dsh/profiles/web` and re-run the command.
+> A git install pulls source and has pnpm run `prepare`; pnpm ≥10 refuses until you explicitly allow it. Copy the exact package key pnpm prints into that profile's `pnpm-workspace.yaml`:
+> ```yaml
+> allowBuilds:
+>   dsh-helper: true
+> ```
+> That authorization means "allow this package's code to run on your machine at install time". If you only want prebuilt code, use **Option 1**.
 
 ### Option 3 — from source
 
@@ -83,7 +80,9 @@ Defaults ship in `cordis.patch.yml`; your overrides are written to `~/.dsh/profi
 | `agent/status` (`idle`) | Completion toast + chime |
 | `agent/request-error` | Error toast (passthrough — this plugin never blocks or retries) |
 | `tools/pre-execute` (`ask_user_question`) | Confirmation toast (multi-choice question) |
-| `approval/request` | Permission toast (tool approval; observe-and-forward only, never blocks) |
+| `session/event` → `approval/asked` | Permission toast (tool approval) |
+
+> Approval notifications listen on the session audit event `approval/asked` rather than the `approval/request` waterfall. Cordis waterfall semantics are "not calling `next()` vetoes the rest of the chain", so any earlier listener that returns a result directly (e.g. an auto-approval gate) would permanently starve later listeners. `approval/asked` is a log-only audit event written before the decision, so it cannot be pre-empted.
 
 The settings HTTP route (`/_dsh/dsh-helper/settings`) is bound to localhost only — anything other than `127.0.0.1` / `::1` gets a `403`.
 
@@ -109,7 +108,8 @@ Both halves are plain ES modules / UMD — there is no bundler, so edit and relo
 - Notifications target Windows (PowerShell WinRT Toast). On macOS/Linux the plugin still loads, but toasts and sounds are silent no-ops.
 - Sound playback uses WPF MediaPlayer via PowerShell. If that's unavailable it falls back to `System.Media.SoundPlayer`, which only plays wav and ignores the volume setting.
 - If Windows Focus Assist / Do Not Disturb is on, toasts may be suppressed.
-- Toasts are sent under Windows' built-in File Explorer app id (a registered AUMID), so no Start-Menu shortcut is required and notifications are never silently dropped for an unregistered custom id. They'll appear in Action Center grouped under "File Explorer".
+- **Delivery identity (handled automatically since 0.5.0)**: Windows requires a desktop app to have a Start-Menu shortcut carrying `System.AppUserModel.ID`, otherwise toasts are **intermittently and silently dropped** (especially while a foreground window exists) — the symptom users report as "I only get notifications while the app is focused". The plugin idempotently creates that shortcut on startup (`%APPDATA%\Microsoft\Windows\Start Menu\Programs\dsh-helper.lnk`) — no manual step, no admin rights.
+- If a cleanup tool removes the shortcut, it is recreated on the next DSH start.
 
 ## 📄 License
 
@@ -117,6 +117,7 @@ Both halves are plain ES modules / UMD — there is no bundler, so edit and relo
 
 ## 📝 Changelog
 
+- **0.5.0** — Fixed "no notifications unless the app is focused": Windows requires a desktop app's Start-Menu shortcut to carry `System.AppUserModel.ID`, otherwise toasts are intermittently dropped silently. The plugin now idempotently creates that shortcut at startup (runtime-created, so the package ships **no install scripts** and npm installation needs no build authorization). Also: approval notifications now listen on `session/event` → `approval/asked` instead of the `approval/request` waterfall, so an auto-approval gate can no longer starve them.
 - **0.4.4** — Removed the global throttle introduced in 0.4.3 (it swallowed completion notifications from concurrent main sessions). Only the **sub-agent filter** remains.
 - **0.4.3** — Fixed notification flooding: completion notifications no longer fire for **sub-agents** (dsh runs several sub-agents in parallel and each one finishing posted a "task complete" toast, flooding the notification center — main session ids carry a `session-` prefix while sub-agent ids are bare UUIDs, used for filtering); added a global 60s throttle so multiple main sessions finishing together still post at most one toast.
 - **0.4.2** — The toast header now shows a real app name: the AUMID switched from the borrowed File Explorer GUID to `dsh-helper`, with its `DisplayName` idempotently written to `HKCU\Software\Classes\AppUserModelId\dsh-helper` before every send — the header changes from a hex GUID to **dsh-helper**.
